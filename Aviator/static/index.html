@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviator Cassino</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    
+    <!-- Tela de Autenticação -->
+    <div id="auth-screen" class="screen">
+        <div class="auth-container glass">
+            <h1 class="logo-text">AVIATOR <i class="fa-solid fa-plane-up"></i></h1>
+            <p>Entre ou cadastre-se para jogar.</p>
+            
+            <div class="input-group">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" id="username" placeholder="Nome de usuário">
+            </div>
+            
+            <div class="input-group">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" id="password" placeholder="Senha">
+            </div>
+            
+            <div class="auth-buttons">
+                <button id="btn-login" class="btn btn-primary">Entrar</button>
+                <button id="btn-register" class="btn btn-secondary">Cadastrar</button>
+            </div>
+            <div id="auth-error" class="error-text"></div>
+        </div>
+    </div>
+
+    <!-- Tela do Jogo -->
+    <div id="game-screen" class="screen hidden">
+        
+        <!-- Header Principal -->
+        <header class="top-nav">
+            <div class="logo">AVIATOR <i class="fa-solid fa-plane-up text-red"></i></div>
+            <div class="user-info">
+                <span id="user-display"><i class="fa-solid fa-user"></i> <span id="username-display">User</span></span>
+                <div class="balance-display">
+                    <span class="currency">R$</span>
+                    <span id="balance">0.00</span>
+                </div>
+                <button id="btn-deposit" class="btn-action btn-deposit-action" title="Depositar"><i class="fa-solid fa-plus"></i> Depositar</button>
+                <button id="btn-withdraw" class="btn-action btn-withdraw-action" title="Sacar"><i class="fa-solid fa-money-bill-wave"></i> Sacar</button>
+                <a id="admin-link" href="/admin" target="_blank" class="btn-icon hidden" title="Painel Admin"><i class="fa-solid fa-shield-halved"></i></a>
+                <button id="btn-logout" class="btn-icon" title="Sair"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </header>
+
+        <!-- Histórico -->
+        <div class="history-bar" id="history-bar"></div>
+
+        <div class="game-container">
+            <div class="game-area">
+                <div class="game-bg-grid"></div>
+                <div id="loading-overlay" class="overlay hidden">
+                    <div class="spinner"></div>
+                    <p>Conectando ao servidor...</p>
+                </div>
+
+                <div id="waiting-overlay" class="overlay hidden">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="waiting-progress"></div>
+                    </div>
+                    <h2>Aguardando Próxima Rodada</h2>
+                    <p>Faça sua aposta!</p>
+                </div>
+                
+                <div id="crashed-overlay" class="overlay hidden">
+                    <h2 class="text-red">VOOU PARA LONGE!</h2>
+                </div>
+
+                <div class="multiplier-display" id="multiplier">1.00x</div>
+                <canvas id="game-canvas"></canvas>
+                
+                <svg id="plane" class="plane-icon" viewBox="0 0 100 100" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ff3344" />
+                            <stop offset="100%" stop-color="#cc0011" />
+                        </linearGradient>
+                        <linearGradient id="wingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ff1a27" />
+                            <stop offset="100%" stop-color="#99000d" />
+                        </linearGradient>
+                        <linearGradient id="fireGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="rgba(255, 200, 0, 0)" />
+                            <stop offset="50%" stop-color="rgba(255, 100, 0, 0.8)" />
+                            <stop offset="100%" stop-color="#ffaa00" />
+                        </linearGradient>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    
+                    <!-- Fogo da Turbina (Exhaust) -->
+                    <path class="exhaust-flame" d="M 25 47 L 5 47 L 15 50 Z" fill="url(#fireGrad)" filter="url(#glow)" />
+                    <path class="exhaust-flame" d="M 25 53 L 5 53 L 15 50 Z" fill="url(#fireGrad)" filter="url(#glow)" />
+
+                    <!-- Corpo Principal -->
+                    <path d="M 20 45 Q 60 45 85 48 C 95 49 95 51 85 52 Q 60 55 20 55 Z" fill="url(#bodyGrad)" />
+                    
+                    <!-- Asas Traseiras -->
+                    <path d="M 20 45 L 30 30 L 35 30 L 28 46 Z" fill="url(#wingGrad)" />
+                    <path d="M 20 55 L 30 70 L 35 70 L 28 54 Z" fill="url(#wingGrad)" />
+
+                    <!-- Asa Principal -->
+                    <path d="M 45 47 L 65 15 L 75 15 L 60 48 Z" fill="url(#wingGrad)" />
+                    <path d="M 45 53 L 65 85 L 75 85 L 60 52 Z" fill="url(#wingGrad)" />
+
+                    <!-- Cabine do Piloto (Cockpit) -->
+                    <path d="M 65 47 Q 75 47 80 49 L 80 51 Q 75 53 65 53 Z" fill="#111" opacity="0.8" />
+                    
+                    <!-- Nariz (Nose) -->
+                    <path d="M 85 48 C 95 49 95 51 85 52 Z" fill="#fff" opacity="0.3" />
+                </svg>
+            </div>
+
+            <div class="sidebar">
+                <div class="bet-controls glass">
+                    <div class="bet-input-wrapper">
+                        <button class="btn-adjust" id="btn-minus">-</button>
+                        <input type="number" id="bet-amount" value="10.00" min="1.00" step="1.00">
+                        <button class="btn-adjust" id="btn-plus">+</button>
+                    </div>
+                    <div class="bet-quick-amounts">
+                        <button class="btn-quick" data-amount="10">+10</button>
+                        <button class="btn-quick" data-amount="50">+50</button>
+                        <button class="btn-quick" data-amount="100">+100</button>
+                        <button class="btn-quick" data-amount="500">+500</button>
+                    </div>
+                    
+                    <button id="btn-bet" class="btn btn-large btn-bet">APOSTAR</button>
+                    <button id="btn-cashout" class="btn btn-large btn-cashout hidden">CASH OUT</button>
+                </div>
+
+                <div class="players-list-container glass">
+                    <h3>Todas as Apostas</h3>
+                    <div class="players-list-header">
+                        <span>Usuário</span>
+                        <span>Aposta</span>
+                        <span>Lucro</span>
+                    </div>
+                    <div class="players-list" id="players-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Depósito PIX -->
+    <div id="modal-deposit" class="modal-overlay hidden">
+        <div class="modal-premium glass">
+            <button class="modal-x-close modal-close">✕</button>
+            
+            <!-- Step 1: Valor -->
+            <div id="deposit-step1">
+                <div class="modal-icon-header">
+                    <div class="modal-icon-circle green">
+                        <i class="fa-solid fa-qrcode"></i>
+                    </div>
+                    <h3>Depositar via PIX</h3>
+                    <p>Rápido, seguro e instantâneo</p>
+                </div>
+                
+                <div class="balance-pill">
+                    <i class="fa-solid fa-wallet"></i>
+                    Saldo atual: <strong id="modal-current-balance">R$ 0,00</strong>
+                </div>
+                
+                <div class="amount-quick-grid">
+                    <button class="amount-pill-btn" data-val="10">R$ 10</button>
+                    <button class="amount-pill-btn" data-val="25">R$ 25</button>
+                    <button class="amount-pill-btn" data-val="50">R$ 50</button>
+                    <button class="amount-pill-btn" data-val="100">R$ 100</button>
+                    <button class="amount-pill-btn" data-val="200">R$ 200</button>
+                    <button class="amount-pill-btn" data-val="500">R$ 500</button>
+                </div>
+                
+                <div class="amount-input-big">
+                    <span class="amount-prefix">R$</span>
+                    <input type="number" id="deposit-amount" placeholder="0,00" min="5" step="0.01">
+                </div>
+                <p class="input-hint">Mínimo R$ 5,00</p>
+                
+                <button id="btn-generate-pix" class="btn-modal-main green">
+                    <i class="fa-solid fa-bolt"></i> Gerar QR Code PIX
+                </button>
+            </div>
+            
+            <!-- Step 2: QR Code -->
+            <div id="deposit-pix-info" class="hidden">
+                <div class="modal-icon-header">
+                    <div class="modal-icon-circle green">
+                        <i class="fa-solid fa-check-to-slot"></i>
+                    </div>
+                    <h3>Escaneie e Pague</h3>
+                    <p id="deposit-amount-label">Aguardando pagamento de R$ --</p>
+                </div>
+                
+                <div class="qr-container">
+                    <div class="qr-glow"></div>
+                    <img id="deposit-qr" src="" alt="QR Code PIX">
+                    <div id="qr-placeholder" class="qr-placeholder">
+                        <i class="fa-solid fa-qrcode fa-3x"></i>
+                        <span>QR Code aparecerá aqui</span>
+                    </div>
+                </div>
+                
+                <p class="or-divider"><span>ou copie o código</span></p>
+                
+                <div class="pix-code-block">
+                    <div id="deposit-pix-code" class="pix-code-text"></div>
+                    <button id="btn-copy-pix" onclick="copyPixCode()" class="copy-btn">
+                        <i class="fa-solid fa-copy"></i>
+                    </button>
+                </div>
+                
+                <div id="deposit-status-msg" class="status-waiting">
+                    <span class="pulse-dot"></span>
+                    Aguardando confirmação do pagamento...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Saque -->
+    <div id="modal-withdraw" class="modal-overlay hidden">
+        <div class="modal-premium glass">
+            <button class="modal-x-close modal-close">✕</button>
+            
+            <div class="modal-icon-header">
+                <div class="modal-icon-circle blue">
+                    <i class="fa-solid fa-money-bill-transfer"></i>
+                </div>
+                <h3>Solicitar Saque</h3>
+                <p>Processado em até 24 horas</p>
+            </div>
+            
+            <div class="balance-pill">
+                <i class="fa-solid fa-wallet"></i>
+                Disponível para saque: <strong id="withdraw-balance-display">R$ 0,00</strong>
+            </div>
+            
+            <div class="amount-quick-grid">
+                <button class="amount-pill-btn blue" data-val-wd="10">R$ 10</button>
+                <button class="amount-pill-btn blue" data-val-wd="25">R$ 25</button>
+                <button class="amount-pill-btn blue" data-val-wd="50">R$ 50</button>
+                <button class="amount-pill-btn blue" data-val-wd="100">R$ 100</button>
+            </div>
+            
+            <div class="amount-input-big">
+                <span class="amount-prefix">R$</span>
+                <input type="number" id="withdraw-amount" placeholder="0,00" min="10" step="0.01">
+            </div>
+            
+            <div class="pix-key-input">
+                <i class="fa-brands fa-pix"></i>
+                <input type="text" id="withdraw-pix-key" placeholder="Sua chave PIX (CPF, e-mail, celular...)">
+            </div>
+            
+            <div id="withdraw-error" class="error-text"></div>
+            
+            <button id="btn-confirm-withdraw" class="btn-modal-main blue">
+                <i class="fa-solid fa-paper-plane"></i> Solicitar Saque
+            </button>
+            
+            <p class="modal-footer-note">
+                <i class="fa-solid fa-shield-halved"></i> Saques são aprovados manualmente pelo admin
+            </p>
+        </div>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
